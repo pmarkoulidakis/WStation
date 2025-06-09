@@ -63,7 +63,8 @@ void loop() {
 
   float humidity = dht.readHumidity();
   float dhtTemp = dht.readTemperature();
-
+  float dewPoint = calculateDewPoint(dhtTemp, humidity);
+  
   int analogValue = analogRead(MQ135_PIN);
   float voltage = analogValue * (3.3 / 4095.0);
   float Rs = (3.3 - voltage) / voltage * RL;
@@ -139,11 +140,11 @@ void loop() {
           
         case 4:
           lcd.setCursor(0, 0);
-          lcd.print("Dew Point: ");
-          if (!isnan(dhtTemp) && !isnan(humidity)) {
+          lcd.print("Dew Pnt: ");
+          if (isnan(dewPoint)) {
             lcd.print("Error");
           } else {
-            float dewPoint = calculateDewPoint(dhtTemp, humidity);
+            lcd.print(dewPoint);
             lcd.print((char)223);
             lcd.print("C");
           }
@@ -161,12 +162,17 @@ void loop() {
 
 }
 
-float calculateDewPoint(float tempC, float humidity) {
-  const float a = 17.62;
-  const float b = 243.12;
+// Function to calculate dew point in Celsius
+float calculateDewPoint(float dhtTemp, float humidity) {
+  // Constants for Magnus formula
+  const float a = 17.27;
+  const float b = 237.7; // Celsius
 
-  float gamma = (a * tempC) / (b + tempC) + log(humidity / 100.0);
-  float dewPoint = (b * gamma) / (a - gamma);
+  // Calculate alpha
+  float alpha = ((a * dhtTemp) / (b + dhtTemp)) + log(humidity / 100.0);
+
+  // Calculate dew point
+  float dewPoint = (b * alpha) / (a - alpha);
 
   return dewPoint;
 }
